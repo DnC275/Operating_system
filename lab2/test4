@@ -1,0 +1,15 @@
+#!/bin/bash
+>task4.log
+a=$(ls /proc | grep -E '^[0-9]+$')
+for pid in $a
+do
+	ppid=$(cat /proc/$pid/status 2>/dev/null | grep -E '^PPid:' | grep -Eo '[0-9]+$')
+	if [[ -z $ppid ]]; then continue; fi
+		sum_ex=$(cat /proc/$pid/sched | grep -E 'sum_exec_runtime' |\
+		grep -Eo '[^[:space:]]+$')
+		nr_sw=$(cat /proc/$pid/sched | grep -E 'nr_switches' | grep -Eo '[^[:space:]]+$')
+		art=$(echo "scale=4;$sum_ex/$nr_sw" | bc)
+	echo "ProcessID=$pid : Parent_ProcessID=$ppid : Average_Running_Time=$art" >> task4.log
+done
+tmp=$(cat task4.log | sort -t: -nk 2.19)
+echo "$tmp" > task4.log

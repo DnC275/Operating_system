@@ -1,0 +1,54 @@
+#!/bin/bash
+>tmp_file2
+declare -A array1
+pid_com=$(ps -Ao "%p:%a")
+grep '^read_bytes:' /proc/[0-9]*/io 2>/dev/null > tmp_file
+i=0
+while read line; do
+	array1[$i]=$line
+	let i=i+1
+done < tmp_file
+sleep 1m
+grep '^read_bytes:' /proc/[0-9]*/io 2>/dev/null > tmp_file
+for ((i=0;i<${#array1[@]};i++)); do
+	pid1=$(echo "${array1[$i]}" | grep -Eo '/[0-9]+' | grep -o '[0-9]*$')
+	str=$(cat tmp_file | grep -E "/$pid1/")
+	if [[ $str != "" ]]; then
+		bytes1=$(echo "${array1[$i]}" | grep -Eo '[0-9]*$')
+		bytes2=$(echo "$str" | grep -Eo '[0-9]*$')
+		del=$(echo "$bytes2-$bytes1" | bc)
+		echo "$pid1:$del" >> tmp_file2
+	fi
+done
+pid_del=$(sort tmp_file2 -t: -nk2)
+ans1=""
+ans2=""
+ans3=""
+for line in $pid_del; do
+	if [[ -z $ans1 ]]; then
+		pid=$(echo "$line" | grep -Eo '^[0-9]*')
+		del=$(echo "$line" | grep -Eo ':.*')
+		tmp=$(echo "$pid_com" | grep "^[[:space:]]*$pid:" | grep -Eo ':.*')
+		ans1="$pid$tmp$del"
+		continue
+	fi
+	if [[ -z $ans2 ]]; then
+		pid=$(echo "$line" | grep -Eo '^[0-9]*')
+		del=$(echo "$line" | grep -Eo ':.*')
+		tmp=$(echo "$pid_com" | grep "^[[:space:]]*$pid:" | grep -Eo ':.*')
+		ans2="$pid$tmp$del"
+		continue
+	fi
+	if [[ -z $ans3 ]]; then
+		pid=$(echo "$line" | grep -Eo '^[0-9]*')
+		del=$(echo "$line" | grep -Eo ':.*')
+		tmp=$(echo "$pid_com" | grep "^[[:space:]]*$pid:" | grep -Eo ':.*')
+		ans3="$pid$tmp$del"
+		break
+	fi
+done
+echo "$ans1"
+echo "$ans2"
+echo "$ans3"
+rm tmp_file
+rm tmp_file2

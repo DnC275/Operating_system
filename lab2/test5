@@ -1,0 +1,22 @@
+#!/bin/bash
+>task5.log
+sum=0
+main_ppid=-1
+count=0
+while read line
+do
+	ppid=$(echo "$line" | grep -Eo 'Parent_ProcessID=[0-9]+' | grep -Eo '[0-9]+$')
+	art=$(echo "$line" | grep -Eo '[0-9]*\.{0,1}[0-9]+$')
+	if (( $ppid != $main_ppid && $count != 0 )); then
+		m=$(echo "scale=4; $sum/$count" | bc)
+		echo "Average_Sleeping_Children_of_ParentID=$main_ppid is $m" >> task5.log
+		sum=0
+		count=0
+	fi
+	main_ppid=$ppid
+	echo $line >> task5.log
+	sum=$(echo "scale=4; $sum+$art" | bc)
+	let count=$count+1
+done < task4.log
+m=$(echo "scale=4; $sum/$count" | bc)
+echo "Average_Sleeping_Children_of_ParentID=$main_ppid is $m" >> task5.log

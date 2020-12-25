@@ -1,0 +1,2 @@
+#!/bin/bash
+ps -Ao "%p %a" | grep '/sbin/' | grep -Eo '^[[:space:]]*[0-9]+' > task2.log

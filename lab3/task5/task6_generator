@@ -1,0 +1,20 @@
+#!/bin/bash
+while true; do
+	read line
+	case "$line" in
+		"+")
+			kill -USR1 $(cat .pid)
+			;;
+		"*")
+			kill -USR2 $(cat .pid)
+			;;
+		*)
+			check=$(echo "$line" | grep "TERM")
+			if [[ -n $check ]]; then
+				kill -SIGTERM $(cat .pid)
+			else
+				:
+			fi
+			;;
+	esac
+done

@@ -1,0 +1,18 @@
+#!/bin/bash
+printf "%7s %7s\n" /proc top
+list=$(ls /proc | grep -E '^[0-9]+$')
+result=-1
+max_size=-1
+for pid in $list
+do
+	rss=$(cat /proc/$pid/status 2>/dev/null | grep 'VmRSS:' | grep -Eo '[0-9]* kB$' |\
+	grep -Eo '^[0-9]*')
+	if [[ $rss != "" ]]; then
+		if (( $max_size < $rss )); then
+			max_size=$rss
+			result=$pid
+		fi
+	fi
+done
+top_result=$(top -b -n 1 -o %MEM | sed '8!d' | awk '{print $1}')
+printf "%7s %7s\n" $result $top_result

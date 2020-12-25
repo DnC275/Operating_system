@@ -1,0 +1,13 @@
+#!/bin/bash
+mkdir test 2>/dev/null && {
+	echo "catalog test was created succesfully" >> ~/report
+	sc_time=$(ps axo pid,start | grep -E "^[[:space:]]*$$" | grep -Eo "[0-9]+:[0-9]+:[0-9]+")
+	sc_date=$(ps axo pid,lstart | grep -E "^[[:space:]]*$$" | awk '{printf $2":"$3":"$4}')
+	tmp=$sc_date\_$sc_time
+	> test/$tmp
+}
+ping -c 1 www.net_nikogo.ru 2>/dev/null || {
+	tmp=$(date | awk '{printf $1":"$2":"$3"_"$4" Warning"}')
+	#echo $tmp
+	echo "$tmp" >> ~/report
+}

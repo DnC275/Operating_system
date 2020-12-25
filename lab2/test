@@ -1,0 +1,39 @@
+#!/bin/bash
+>task.log
+a=$(ls /proc | grep -E '^[0-9]+$')
+for pid in $a
+do
+	ppid=$(cat /proc/$pid/status 2>/dev/null | grep -E '^PPid:' | grep -Eo '[0-9]+$')
+	if [[ -z $ppid ]]; then continue; fi
+	sum_ex=$(cat /proc/$pid/status | grep -E '^VmRSS:' | grep -Eo '[0-9]+ kB$' |\
+	 grep -Eo '^[0-9]+')
+	if [[ -z $sum_ex ]]; then
+		sum_ex=0
+	fi
+	echo "$pid $ppid $sum_ex"
+done >> task.log
+tmp=$(cat task.log | sort -nk 2)
+echo "$tmp" > task.log
+
+>new_task.log
+sum=0
+main_ppid=-1
+count=0
+while read line
+do
+	pid=$(echo "$line" | awk '{print $1}')
+	ppid=$(echo "$line" | awk '{print $2}')
+	msize=$(echo "$line" | awk '{print $3}')
+	if (( $ppid != $main_ppid && $count != 0 )); then
+		ppid_size=$(cat task.log | grep -E "^$ppid" | grep -Eo '[0-9]+$')
+		let sum=$sum+$ppid_size
+		echo "$main_ppid $sum" >> new_task.log
+		sum=0
+	fi
+	count=1
+	main_ppid=$ppid
+	let sum=$sum+$msize
+done < task.log
+ppid_size=$(cat task.log | grep -E "^$ppid" | grep -Eo '[0-9]+$')
+let sum=$sum+$ppid_size
+echo "$main_ppid $sum" >> new_task.log

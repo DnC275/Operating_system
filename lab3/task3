@@ -1,0 +1,9 @@
+#!/bin/bash
+crontab -l > mycron
+day=$(date | grep -Eo "^[^[:space:]]+")
+new="5 * * * $day /home/user/lab3/task1"
+if [[ -z $(cat mycron | grep -F "$new") ]]; then
+	echo "$new" >> mycron
+	crontab mycron
+fi
+rm mycron

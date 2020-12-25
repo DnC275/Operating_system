@@ -1,0 +1,13 @@
+#!/bin/bash
+ps -A O-T o pid,ppid,command | tail -n +2 > tmp.log
+while read line
+do
+	tmp_pid=$(echo $line | awk '{print $1}')
+	tmp_ppid=$(echo $line | awk '{print $2}')
+	com=$(echo $line | awk '{print $3}')
+	if [[ $$ != $tmp_pid && $$ != $tmp_ppid  ]]; then
+		echo "$tmp_pid"
+		break
+	fi
+done < tmp.log
+rm tmp.log
